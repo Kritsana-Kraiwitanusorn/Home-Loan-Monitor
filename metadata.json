@@ -1,0 +1,6 @@
+{
+  "name": "Home Loan Installment Monitor",
+  "description": "แอปพลิเคชันสำหรับติดตามการผ่อนชำระค่างวดบ้าน บันทึกข้อมูลสัญญา ตารางผ่อนชำระเต็มรูปแบบ และการจ่ายเงินโปะเพิ่ม พร้อมทั้ง Dashboard สรุปข้อมูลสำคัญ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

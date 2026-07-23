@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Contract": {
+      "title": "Contract",
+      "description": "Home loan contract",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "nickname": { "type": "string" },
+        "bankName": { "type": "string" },
+        "loanAmount": { "type": "number" },
+        "startDate": { "type": "string" },
+        "totalMonths": { "type": "number" },
+        "dueDay": { "type": "number" },
+        "status": { "type": "string", "enum": ["Active", "Closed", "Refinanced"] },
+        "interestRates": { "type": "array" },
+        "installmentSchedules": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "sortOrder": { "type": "number" }
+      },
+      "required": ["userId", "nickname", "bankName", "loanAmount", "startDate", "totalMonths", "dueDay", "status", "interestRates", "createdAt", "updatedAt"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Recorded installment payment",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "contractId": { "type": "string" },
+        "installmentIndex": { "type": "number" },
+        "paymentDate": { "type": "string" },
+        "scheduledAmount": { "type": "number" },
+        "extraAmount": { "type": "number" },
+        "totalPaid": { "type": "number" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "contractId", "installmentIndex", "paymentDate", "scheduledAmount", "extraAmount", "totalPaid", "createdAt", "updatedAt"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "User specific app configuration (title, house number)",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "houseNumber": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "houseNumber", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/contracts/{contractId}": {
+      "schema": "Contract",
+      "description": "Home loan contracts managed by the user"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Installment payments recorded by the user"
+    },
+    "/settings/{userId}": {
+      "schema": "Settings",
+      "description": "User specific custom title and house number configuration"
+    }
+  }
+}
