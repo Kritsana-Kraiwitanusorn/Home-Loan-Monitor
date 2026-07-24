@@ -26,8 +26,11 @@ import ContractDetail from './components/ContractDetail';
 import AuthModal from './components/AuthModal';
 import AddContractModal from './components/AddContractModal';
 import RecordPaymentModal from './components/RecordPaymentModal';
+import DoughnutComparisonChart from './components/DoughnutComparisonChart';
+import PrepaymentSimulator from './components/PrepaymentSimulator';
+import RefinanceAnalysisSection from './components/RefinanceAnalysisSection';
 
-import { Landmark, Plus, RefreshCw, HelpCircle } from 'lucide-react';
+import { Landmark, Plus, RefreshCw, HelpCircle, Calculator, Zap } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -50,6 +53,9 @@ export default function App() {
   const [editingPayment, setEditingPayment] = useState<PaymentRecord | null>(null);
   const [draggedContractId, setDraggedContractId] = useState<string | null>(null);
   const [showAllTimeModal, setShowAllTimeModal] = useState(false);
+  const [showRefinanceModal, setShowRefinanceModal] = useState(false);
+  const [showSimulatorModal, setShowSimulatorModal] = useState(false);
+
 
   // Monitor Auth State
   useEffect(() => {
@@ -546,9 +552,9 @@ export default function App() {
     <div className="min-h-screen bg-[#e8ebe0] text-[#4a3e26] font-sans pb-16">
       <div className="max-w-6xl mx-auto px-5 py-4 md:px-6 md:py-6 space-y-6">
         
-        {/* Sticky Header & Overview Metrics for Dashboard view */}
+        {/* Header & Overview Metrics for Dashboard view */}
         {!activeContractDetails ? (
-          <div className="relative md:sticky md:top-0 md:z-20 bg-[#e8ebe0] -mx-5 px-5 md:-mx-6 md:px-6 pt-2 pb-4 md:pt-4 md:pb-4 space-y-4 md:space-y-6 md:border-b md:border-[#ebdcb2]/30">
+          <div className="space-y-4 md:space-y-6">
             <Header
               totalContractsCount={contracts.filter((c) => c.status === 'Active' || !c.status).length}
               title={appTitle}
@@ -557,13 +563,20 @@ export default function App() {
             />
             <Overview
               totalBalance={metrics.totalBalance}
+              monthChangePercent={metrics.monthChangePercent}
               totalExtraPaid={metrics.totalExtraPaid}
+              allTimePrincipalPaid={metrics.allTimePrincipalPaid}
+              allTimeInterestPaid={metrics.allTimeInterestPaid}
+              interestPercentageOfHomeValue={metrics.interestPercentageOfHomeValue}
+              remainingYearsMonthsStr={metrics.remainingYearsMonthsStr}
               nextInstallmentText={metrics.nextInstallmentText}
               nextInstallmentDateStr={metrics.nextInstallmentDateStr}
               nextInstallmentAmount={metrics.nextInstallmentAmount}
               allNextPayments={metrics.allNextPayments}
               balancesBreakdown={metrics.balancesBreakdown}
               extraPaidBreakdown={metrics.extraPaidBreakdown}
+              principalPaidBreakdown={metrics.principalPaidBreakdown}
+              interestPaidBreakdown={metrics.interestPaidBreakdown}
             />
           </div>
         ) : (
@@ -577,7 +590,7 @@ export default function App() {
 
         {/* Loading Overlay for Firestore mutations */}
         {dataLoading && (
-          <div className="flex items-center justify-center p-3 bg-white border border-[#c0b298] text-xs text-[#7d6840] font-semibold gap-2 animate-pulse rounded-sm">
+          <div className="flex items-center justify-center p-3 bg-white border border-[#c0b298] text-xs text-[#7d6840] font-semibold gap-2 animate-pulse rounded-xl shadow-xs">
             <RefreshCw className="w-4 h-4 animate-spin" />
             <span>กำลังซิงค์ข้อมูลกับระบบคลาวด์ Firebase...</span>
           </div>
@@ -611,12 +624,7 @@ export default function App() {
           <div className="space-y-6">
             {/* If zero contracts, show nice empty state with mock data prompt */}
             {contracts.length === 0 ? (
-              <div className="relative bg-[#fbfbfa] border border-[#c0b298] p-10 text-center rounded-sm space-y-6">
-                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#7d6840]" />
-                <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#7d6840]" />
-                <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#7d6840]" />
-                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#7d6840]" />
-
+              <div className="relative bg-[#fbfbfa] border border-[#c0b298]/80 p-10 text-center rounded-2xl shadow-sm space-y-6">
                 <div className="inline-flex p-4 rounded-full bg-[#e8ebe0] border border-[#c0b298] text-[#7d6840]">
                   <Landmark className="w-10 h-10" />
                 </div>
@@ -633,7 +641,7 @@ export default function App() {
                       setEditingContract(null);
                       setShowAddContractModal(true);
                     }}
-                    className="flex items-center gap-2 py-2.5 px-6 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold rounded-sm shadow-sm transition-colors cursor-pointer"
+                    className="flex items-center gap-2 py-2.5 px-6 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>เพิ่มสัญญาสินเชื่อแรก</span>
@@ -641,7 +649,7 @@ export default function App() {
 
                   <button
                     onClick={handlePreseedMockData}
-                    className="flex items-center gap-2 py-2.5 px-6 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-sm shadow-sm transition-colors cursor-pointer"
+                    className="flex items-center gap-2 py-2.5 px-6 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>สร้างข้อมูลสัญญาทดลองตามต้นแบบ (Pre-seed demo)</span>
@@ -649,69 +657,91 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              /* ACTIVE CONTRACT CARDS LIST */
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-[#4a3e26] font-sans">
-                    สัญญาสินเชื่อทั้งหมด
-                  </h2>
+              /* ACTIVE DASHBOARD ANALYTICS & CONTRACT CARDS */
+              <div className="space-y-6">
+                {/* Section 1: Active Contracts List & Action Toolbar */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <h2 className="text-lg font-bold text-[#4a3e26] font-sans">
+                      สัญญาสินเชื่อทั้งหมด ({contracts.length} สัญญา)
+                    </h2>
 
-                  <div className="flex items-center gap-2">
-                    {contracts.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
-                        onClick={() => setShowAllTimeModal(true)}
-                        className="flex items-center gap-1.5 bg-[#fbfbfa] border border-[#c0b298] hover:bg-[#e6e4d5]/50 text-[#7d6840] hover:text-[#5e4e2f] text-xs font-semibold px-4 py-2 shadow-xs rounded-sm transition-colors cursor-pointer"
-                        title="ดูสรุปสถิติจ่ายรวมสะสมทั้งหมดของทุกบัญชี"
+                        onClick={() => setShowSimulatorModal(true)}
+                        className="flex items-center gap-1.5 bg-teal-50 border border-teal-300 hover:bg-teal-100 text-teal-900 text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
+                        title="ทดลองปรับยอดโปะเพิ่มต่อเดือนเพื่อดูสถิติการปิดบัญชีเร็วขึ้น"
                       >
-                        <span>ยอดชำระสะสมทั้งหมด</span>
+                        <Zap className="w-3.5 h-3.5 text-teal-700" />
+                        <span>จำลองการโปะ</span>
                       </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setEditingContract(null);
-                        setShowAddContractModal(true);
-                      }}
-                      className="flex items-center gap-1.5 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold px-4 py-2 shadow-xs rounded-sm transition-colors cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>เพิ่มสัญญาสินเชื่อ</span>
-                    </button>
+
+                      <button
+                        onClick={() => setShowRefinanceModal(true)}
+                        className="flex items-center gap-1.5 bg-amber-50/80 border border-amber-300 hover:bg-amber-100 text-amber-900 text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
+                        title="เปรียบเทียบความคุ้มค่าการรีไฟแนนซ์หรือขอลดดอกเบี้ย"
+                      >
+                        <Calculator className="w-3.5 h-3.5 text-amber-700" />
+                        <span>วิเคราะห์รีไฟแนนซ์</span>
+                      </button>
+
+                      {contracts.length > 0 && (
+                        <button
+                          onClick={() => setShowAllTimeModal(true)}
+                          className="flex items-center gap-1.5 bg-[#fbfbfa] border border-[#c0b298] hover:bg-[#e6e4d5]/50 text-[#7d6840] hover:text-[#5e4e2f] text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
+                          title="ดูสรุปสถิติจ่ายรวมสะสมทั้งหมดของทุกบัญชี"
+                        >
+                          <span>ยอดชำระสะสมทั้งหมด</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setEditingContract(null);
+                          setShowAddContractModal(true);
+                        }}
+                        className="flex items-center gap-1.5 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>เพิ่มสัญญาสินเชื่อ</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contracts Cards Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {contractsWithSchedules.map(({ contract, schedule }, index) => (
+                      <ContractCard
+                        key={contract.id}
+                        contract={contract}
+                        schedule={schedule}
+                        onSelect={(id) => setSelectedContractId(id)}
+                        onDragStart={(e, id) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDraggedContractId(id);
+                        }}
+                        onDragOver={(e, id) => {
+                          e.preventDefault();
+                        }}
+                        onDrop={(e, id) => {
+                          e.preventDefault();
+                          if (draggedContractId && draggedContractId !== id) {
+                            handleReorderContracts(draggedContractId, id);
+                          }
+                        }}
+                        onDragEnd={() => {
+                          setDraggedContractId(null);
+                        }}
+                        isDragging={draggedContractId === contract.id}
+                        onMove={handleMoveContract}
+                        isFirst={index === 0}
+                        isLast={index === contractsWithSchedules.length - 1}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                {/* Contracts Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {contractsWithSchedules.map(({ contract, schedule }, index) => (
-                    <ContractCard
-                      key={contract.id}
-                      contract={contract}
-                      schedule={schedule}
-                      onSelect={(id) => setSelectedContractId(id)}
-                      onDragStart={(e, id) => {
-                        e.dataTransfer.effectAllowed = 'move';
-                        setDraggedContractId(id);
-                      }}
-                      onDragOver={(e, id) => {
-                        e.preventDefault();
-                      }}
-                      onDrop={(e, id) => {
-                        e.preventDefault();
-                        if (draggedContractId && draggedContractId !== id) {
-                          handleReorderContracts(draggedContractId, id);
-                        }
-                      }}
-                      onDragEnd={() => {
-                        setDraggedContractId(null);
-                      }}
-                      isDragging={draggedContractId === contract.id}
-                      onMove={handleMoveContract}
-                      isFirst={index === 0}
-                      isLast={index === contractsWithSchedules.length - 1}
-                    />
-                  ))}
-                </div>
-                
-                {/* Seed demo data reminder if they only have custom data */}
+                {/* Seed demo data reminder */}
                 <div className="text-center mt-6">
                   <button
                     onClick={handlePreseedMockData}
@@ -762,8 +792,27 @@ export default function App() {
           allTimeTotalPaid={metrics.allTimeTotalPaid}
           allTimePrincipalPaid={metrics.allTimePrincipalPaid}
           allTimeInterestPaid={metrics.allTimeInterestPaid}
+          totalRemainingBalance={metrics.totalBalance}
           allTimeBreakdown={metrics.allTimeBreakdown}
         />
+
+        {/* MODAL: REFINANCE ANALYSIS */}
+        <RefinanceAnalysisSection
+          isOpen={showRefinanceModal}
+          onClose={() => setShowRefinanceModal(false)}
+          contracts={contracts}
+          payments={payments}
+        />
+
+        {/* MODAL: PREPAYMENT SIMULATOR */}
+        {showSimulatorModal && (
+          <PrepaymentSimulator
+            isOpen={showSimulatorModal}
+            onClose={() => setShowSimulatorModal(false)}
+            contracts={contracts}
+            payments={payments}
+          />
+        )}
       </div>
     </div>
   );

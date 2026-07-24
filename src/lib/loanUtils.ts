@@ -264,6 +264,38 @@ export function calculateSummaryMetrics(
   // 1. Total remaining balance across all active contracts
   totalBalance = contractBalances.reduce((sum, item) => sum + item.balance, 0);
 
+  // 1b. Total initial loan amount across active contracts
+  const totalOriginalLoanAmount = activeContracts.reduce((sum, c) => sum + c.loanAmount, 0);
+
+  // 1c. Maximum remaining unpaid months across active contracts
+  let remainingMonths = 0;
+  contractBalances.forEach(item => {
+    const unpaidCount = item.schedule.filter(row => !row.isPaid).length;
+    if (unpaidCount > remainingMonths) {
+      remainingMonths = unpaidCount;
+    }
+  });
+
+  const remainingYears = Math.floor(remainingMonths / 12);
+  const remainingMonthsRem = remainingMonths % 12;
+  const remainingYearsMonthsStr = remainingYears > 0 
+    ? `${remainingYears} ปี${remainingMonthsRem > 0 ? ` ${remainingMonthsRem} เดือน` : ''}`
+    : `${remainingMonthsRem} เดือน`;
+
+  // 1d. Estimate previous month's balance or principal paid in last paid month for % reduction calculation
+  let lastMonthPrincipalPaid = 0;
+  contractBalances.forEach(item => {
+    const paidRows = item.schedule.filter(r => r.isPaid);
+    if (paidRows.length > 0) {
+      const lastPaid = paidRows[paidRows.length - 1];
+      lastMonthPrincipalPaid += lastPaid.principalPortion;
+    }
+  });
+  const prevBalanceEstimate = totalBalance + lastMonthPrincipalPaid;
+  const monthChangePercent = prevBalanceEstimate > 0 
+    ? Math.round((lastMonthPrincipalPaid / prevBalanceEstimate) * 100 * 10) / 10
+    : 0;
+
   // 2. Accumulated extra payment
   totalExtraPaid = payments.reduce((sum, p) => sum + p.extraAmount, 0);
 
@@ -341,8 +373,39 @@ export function calculateSummaryMetrics(
     };
   }).filter(item => item.totalPaid > 0);
 
+  // Calculate % interest paid of initial home value
+  const interestPercentageOfHomeValue = totalOriginalLoanAmount > 0
+    ? Math.round((allTimeInterestPaid / totalOriginalLoanAmount) * 100 * 10) / 10
+    : 0;
+
+  // Interest breakdown for active contracts
+  const interestPaidBreakdown = activeContracts.map(c => {
+    const found = allTimeBreakdown.find(b => b.contractId === c.id);
+    return {
+      contractId: c.id,
+      nickname: c.nickname,
+      bankName: c.bankName,
+      interestPaid: found ? found.interestPaid : 0
+    };
+  });
+
+  // Principal breakdown for active contracts
+  const principalPaidBreakdown = activeContracts.map(c => {
+    const found = allTimeBreakdown.find(b => b.contractId === c.id);
+    return {
+      contractId: c.id,
+      nickname: c.nickname,
+      bankName: c.bankName,
+      principalPaid: found ? found.principalPaid : 0
+    };
+  });
+
   return {
     totalBalance,
+    totalOriginalLoanAmount,
+    monthChangePercent,
+    remainingMonths,
+    remainingYearsMonthsStr,
     totalExtraPaid,
     nextInstallmentText,
     nextInstallmentDateStr,
@@ -350,10 +413,246 @@ export function calculateSummaryMetrics(
     allNextPayments: nextPayments,
     balancesBreakdown,
     extraPaidBreakdown,
+    interestPaidBreakdown,
+    principalPaidBreakdown,
+    interestPercentageOfHomeValue,
     allTimeTotalPaid,
     allTimePrincipalPaid,
     allTimeInterestPaid,
     allTimeBreakdown
+  };
+}
+
+/**
+ * Simulates prepayment across active contracts
+ */
+export function simulatePrepayment(
+  contracts: LoanContract[],
+  payments: PaymentRecord[],
+  monthlyExtra: number
+) {
+  const activeContracts = contracts.filter(c => c.status === 'Active');
+  if (activeContracts.length === 0) {
+    return {
+      normalMonths: 0,
+      simulatedMonths: 0,
+      monthsSaved: 0,
+      yearsSavedStr: '0 ปี 0 เดือน',
+      normalTotalInterest: 0,
+      simulatedTotalInterest: 0,
+      interestSaved: 0,
+      curveData: []
+    };
+  }
+
+  // 1. Prepare initial state for each active contract
+  const contractInfos = activeContracts.map(c => {
+    const sched = generateAmortizationSchedule(c, payments);
+    const unpaidRows = sched.filter(r => !r.isPaid);
+    const initialBalance = unpaidRows.length > 0 ? unpaidRows[0].beginningBalance : 0;
+
+    return {
+      contract: c,
+      unpaidRows,
+      initialBalance,
+      termMonths: c.totalMonths || 360
+    };
+  });
+
+  const totalCurrentBalance = contractInfos.reduce((sum, ci) => sum + ci.initialBalance, 0);
+
+  // 2. NORMAL SCHEDULE ACCURATE SNAPSHOTS & METRICS
+  let normalMaxMonths = 0;
+  let normalFutureInterest = 0;
+
+  contractInfos.forEach(ci => {
+    if (ci.unpaidRows.length > normalMaxMonths) {
+      normalMaxMonths = ci.unpaidRows.length;
+    }
+    normalFutureInterest += ci.unpaidRows.reduce((sum, r) => sum + r.interestPortion, 0);
+  });
+
+  const maxYearsNormal = Math.max(1, Math.ceil(normalMaxMonths / 12));
+  const yearlyNormalSnapshots: number[] = [totalCurrentBalance];
+
+  for (let y = 1; y <= maxYearsNormal; y++) {
+    const targetMonthIdx = y * 12;
+    let normalSum = 0;
+    contractInfos.forEach(ci => {
+      if (targetMonthIdx <= ci.unpaidRows.length) {
+        normalSum += ci.unpaidRows[targetMonthIdx - 1].endingBalance;
+      } else {
+        normalSum += 0;
+      }
+    });
+    yearlyNormalSnapshots[y] = Math.max(0, Math.round(normalSum));
+  }
+
+  // 3. PREPAYMENT SIMULATION WITH MONTHLY EXTRA PAYMENT
+  let simulatedFutureInterest = 0;
+  let simulatedMaxMonths = 0;
+  const yearlySimulatedSnapshots: number[] = [totalCurrentBalance];
+
+  // Current balance state for each contract
+  const simState = contractInfos.map(ci => ({
+    contract: ci.contract,
+    balance: ci.initialBalance,
+    sortedRates: [...ci.contract.interestRates].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate)),
+    sortedInstallments: ci.contract.installmentSchedules && ci.contract.installmentSchedules.length > 0
+      ? [...ci.contract.installmentSchedules].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate))
+      : []
+  }));
+
+  let monthIndex = 0;
+  const maxSimMonths = Math.max(600, normalMaxMonths + 24);
+
+  while (simState.some(s => s.balance > 0.01) && monthIndex < maxSimMonths) {
+    monthIndex++;
+
+    const currentSimDate = new Date();
+    currentSimDate.setMonth(currentSimDate.getMonth() + monthIndex);
+    const dateStr = currentSimDate.toISOString().split('T')[0];
+
+    // Calculate interest for each active contract
+    const activeDetails = simState.map(s => {
+      if (s.balance <= 0.01) {
+        return { ...s, activeRate: 0, activeInstallment: 0, interest: 0 };
+      }
+
+      let activeRate = s.sortedRates[0]?.rate || 3.5;
+      for (const r of s.sortedRates) {
+        if (dateStr >= r.effectiveDate) activeRate = r.rate;
+        else break;
+      }
+
+      let activeInstallment = s.contract.monthlyInstallment;
+      for (const inst of s.sortedInstallments) {
+        if (dateStr >= inst.effectiveDate) activeInstallment = inst.amount;
+        else break;
+      }
+
+      const interest = Math.round((s.balance * (activeRate / 100 / 12)) * 100) / 100;
+      return { ...s, activeRate, activeInstallment, interest };
+    });
+
+    activeDetails.forEach(ad => {
+      simulatedFutureInterest += ad.interest;
+    });
+
+    // Extra payment allocation: highest interest rate contract first
+    let remainingExtra = monthlyExtra;
+    const sortedIndices = activeDetails
+      .map((ad, idx) => ({ idx, rate: ad.activeRate, bal: ad.balance }))
+      .filter(item => item.bal > 0.01)
+      .sort((a, b) => b.rate - a.rate);
+
+    simState.forEach((s, idx) => {
+      if (s.balance <= 0.01) return;
+      const ad = activeDetails[idx];
+
+      let regPrincipal = ad.activeInstallment - ad.interest;
+      if (regPrincipal < 0) regPrincipal = 0;
+      if (regPrincipal > s.balance) regPrincipal = s.balance;
+
+      let extraAllocated = 0;
+      if (remainingExtra > 0) {
+        const isHighestRate = sortedIndices[0]?.idx === idx;
+        if (isHighestRate) {
+          const maxExtraNeeded = Math.max(0, s.balance - regPrincipal);
+          extraAllocated = Math.min(remainingExtra, maxExtraNeeded);
+          remainingExtra -= extraAllocated;
+        }
+      }
+
+      const totalPrincipal = Math.min(s.balance, regPrincipal + extraAllocated);
+      s.balance = Math.max(0, Math.round((s.balance - totalPrincipal) * 100) / 100);
+    });
+
+    if (monthIndex % 12 === 0) {
+      const yearIdx = monthIndex / 12;
+      const totalSimBal = simState.reduce((sum, s) => sum + s.balance, 0);
+      yearlySimulatedSnapshots[yearIdx] = Math.max(0, Math.round(totalSimBal));
+    }
+
+    if (simState.every(s => s.balance <= 0.01) && simulatedMaxMonths === 0) {
+      simulatedMaxMonths = monthIndex;
+      const finalYearIdx = Math.ceil(monthIndex / 12);
+      for (let y = finalYearIdx; y <= maxYearsNormal; y++) {
+        yearlySimulatedSnapshots[y] = 0;
+      }
+      break;
+    }
+  }
+
+  if (simulatedMaxMonths === 0) simulatedMaxMonths = normalMaxMonths;
+
+  const currentYear = new Date().getFullYear();
+  const monthsSaved = Math.max(0, normalMaxMonths - simulatedMaxMonths);
+  const yearsSaved = Math.floor(monthsSaved / 12);
+  const remMonthsSaved = monthsSaved % 12;
+  const yearsSavedStr = yearsSaved > 0 
+    ? `${yearsSaved} ปี ${remMonthsSaved} เดือน`
+    : `${remMonthsSaved} เดือน`;
+
+  const normalFinishYear = currentYear + Math.ceil(normalMaxMonths / 12);
+  const simulatedFinishYear = currentYear + Math.ceil(simulatedMaxMonths / 12);
+
+  const interestSaved = Math.max(0, normalFutureInterest - simulatedFutureInterest);
+
+  const maxYears = Math.max(1, Math.ceil(normalMaxMonths / 12));
+
+  let yearStep = 1;
+  if (maxYears > 30) {
+    yearStep = 5;
+  } else if (maxYears > 20) {
+    yearStep = 3;
+  } else if (maxYears > 10) {
+    yearStep = 2;
+  } else {
+    yearStep = 1;
+  }
+
+  const selectedYearsSet = new Set<number>();
+  selectedYearsSet.add(0);
+  for (let y = yearStep; y < maxYears; y += yearStep) {
+    selectedYearsSet.add(y);
+  }
+  selectedYearsSet.add(maxYears);
+
+  const sortedYears = Array.from(selectedYearsSet).sort((a, b) => a - b);
+  const curveData = sortedYears.map(y => {
+    const yearLabel = y === 0 ? 'ปัจจุบัน' : `ปีที่ ${y}`;
+
+    let normalBal = yearlyNormalSnapshots[y];
+    if (normalBal === undefined) {
+      normalBal = y * 12 >= normalMaxMonths ? 0 : (yearlyNormalSnapshots[yearlyNormalSnapshots.length - 1] || 0);
+    }
+
+    let simBal = yearlySimulatedSnapshots[y];
+    if (simBal === undefined) {
+      simBal = y * 12 >= simulatedMaxMonths ? 0 : 0;
+    }
+
+    return {
+      yearLabel,
+      normalBalance: Math.max(0, Math.round(normalBal)),
+      simulatedBalance: Math.max(0, Math.round(simBal))
+    };
+  });
+
+  return {
+    normalMonths: normalMaxMonths,
+    simulatedMonths: simulatedMaxMonths,
+    monthsSaved,
+    yearsSaved,
+    remMonthsSaved,
+    yearsSavedStr,
+    normalFinishYear,
+    simulatedFinishYear,
+    normalTotalInterest: Math.round(normalFutureInterest),
+    simulatedTotalInterest: Math.round(simulatedFutureInterest),
+    interestSaved: Math.round(interestSaved),
+    curveData
   };
 }
 
