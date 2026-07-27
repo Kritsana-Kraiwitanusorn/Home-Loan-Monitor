@@ -29,6 +29,7 @@ export default function RefinanceAnalysisSection({
   // Refinance fee settings
   const [appraisalFee, setAppraisalFee] = useState<number>(3000);
   const [mortgageRegRate, setMortgageRegRate] = useState<number>(1.0); // 1%
+  const [customMortgageFee, setCustomMortgageFee] = useState<number | null>(null);
   const [miscFee, setMiscFee] = useState<number>(1500);
 
   // Custom balance override per contract
@@ -59,7 +60,11 @@ export default function RefinanceAnalysisSection({
   // Option 2: Refinance
   const refinanceMonthlyRate = refinanceRate / 100 / 12;
   const refinance3YearInterest = Math.round(currentBalance * refinanceMonthlyRate * 36);
-  const mortgageRegFee = Math.min(20000, Math.round(currentBalance * (mortgageRegRate / 100)));
+  
+  // Auto calculated mortgage fee based on selected rate percentage
+  const autoMortgageFee = Math.round(currentBalance * (mortgageRegRate / 100));
+
+  const mortgageRegFee = customMortgageFee !== null ? customMortgageFee : autoMortgageFee;
   const totalRefinanceFees = appraisalFee + mortgageRegFee + miscFee;
   const refinanceTotalCost = refinance3YearInterest + totalRefinanceFees;
 
@@ -96,16 +101,18 @@ export default function RefinanceAnalysisSection({
         </div>
 
         {/* Contract Selection & Inputs Bar */}
-        <div className="bg-[#f4f3ea] p-4 border border-[#dcd7c5] rounded-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <label className="block text-xs font-bold text-[#4a3e26] mb-1">
+        <div className="bg-[#f5f4ed] p-5 border border-[#dcd7c5] rounded-2xl space-y-5 shadow-xs">
+          {/* Section Header & Main Inputs */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#c0b298]/40">
+            <div className="space-y-1.5 max-w-xs sm:max-w-sm">
+              <label className="text-xs font-bold text-[#4a3e26] flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-700 inline-block shrink-0" />
                 เลือกสัญญาที่ต้องการประเมิน
               </label>
               <select
                 value={selectedContractId}
                 onChange={(e) => setSelectedContractId(e.target.value)}
-                className="bg-white border border-[#c0b298] px-3 py-2 text-xs font-semibold text-[#4a3e26] rounded-xl focus:ring-2 focus:ring-amber-600 outline-none"
+                className="w-full bg-white border border-[#c0b298] px-3.5 py-2 text-xs font-semibold text-[#4a3e26] rounded-xl focus:ring-2 focus:ring-amber-600 outline-none shadow-2xs cursor-pointer"
               >
                 {activeContracts.map(c => (
                   <option key={c.id} value={c.id}>{c.nickname} - {c.bankName}</option>
@@ -113,9 +120,9 @@ export default function RefinanceAnalysisSection({
               </select>
             </div>
 
-            <div className="text-left sm:text-right">
-              <label className="text-xs font-bold text-[#70644e] block mb-1">
-                ยอดเงินต้นคงเหลือ (บาท):
+            <div className="text-left sm:text-right space-y-1">
+              <label className="text-xs font-bold text-[#70644e] block">
+                ยอดเงินต้นคงเหลือประเมิน (บาท):
               </label>
               <div className="flex items-center gap-1.5 justify-start sm:justify-end">
                 <input
@@ -127,7 +134,7 @@ export default function RefinanceAnalysisSection({
                     const val = Math.max(0, Number(e.target.value));
                     setCustomBalanceMap(prev => ({ ...prev, [selectedContractId]: val }));
                   }}
-                  className="text-lg md:text-xl font-black text-[#4a3e26] font-mono bg-white border border-[#c0b298] px-3 py-1 rounded-xl text-right w-44 shadow-xs focus:ring-2 focus:ring-amber-600 outline-none"
+                  className="text-lg md:text-xl font-black text-[#4a3e26] font-mono bg-white border border-[#c0b298] px-3 py-1 rounded-xl text-right w-44 shadow-2xs focus:ring-2 focus:ring-amber-600 outline-none transition-all"
                 />
                 <span className="text-xs font-bold text-[#70644e]">บาท</span>
               </div>
@@ -141,7 +148,7 @@ export default function RefinanceAnalysisSection({
                       return next;
                     });
                   }}
-                  className="text-[10px] text-amber-800 hover:underline mt-1 block sm:ml-auto cursor-pointer font-medium"
+                  className="text-[10px] text-amber-800 hover:underline block sm:ml-auto cursor-pointer font-medium"
                 >
                   ↺ รีเซ็ตเป็นยอดตามระบบ ({formatCurrency(calculatedBalance)} บ.)
                 </button>
@@ -149,52 +156,120 @@ export default function RefinanceAnalysisSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-[#c0b298]/30">
-            <div>
-              <label className="block text-[11px] font-bold text-[#7d6840] mb-1">
-                อัตราดอกเบี้ย Retention (%)
+          {/* Rates & Fee Inputs Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Input 1: Retention Rate */}
+            <div className="bg-white/80 p-3 rounded-xl border border-[#c0b298]/50 space-y-1.5">
+              <label className="block text-[11px] font-bold text-[#7d6840]">
+                ดอกเบี้ย Retention (%)
               </label>
-              <input
-                type="number"
-                step="0.05"
-                value={retentionRate}
-                onChange={(e) => setRetentionRate(Number(e.target.value))}
-                className="w-full bg-white border border-[#c0b298] px-3 py-1.5 text-xs font-mono font-bold text-[#4a3e26] rounded-xl outline-none focus:ring-2 focus:ring-amber-600"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  step="0.05"
+                  value={retentionRate}
+                  onChange={(e) => setRetentionRate(Number(e.target.value))}
+                  className="w-full bg-white border border-[#c0b298] pl-3 pr-8 py-1.5 text-xs font-mono font-bold text-[#4a3e26] rounded-lg outline-none focus:ring-2 focus:ring-amber-600"
+                />
+                <span className="absolute right-2.5 text-xs text-[#70644e] font-mono">%</span>
+              </div>
+              <span className="text-[10px] text-[#8c7b5f] block">ธนาคารเดิม (ไม่มีค่าธรรมเนียม)</span>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-teal-800 mb-1">
-                อัตราดอกเบี้ย Refinance (%)
+            {/* Input 2: Refinance Rate */}
+            <div className="bg-teal-50/40 p-3 rounded-xl border border-teal-200/80 space-y-1.5">
+              <label className="block text-[11px] font-bold text-teal-900">
+                ดอกเบี้ย Refinance (%)
               </label>
-              <input
-                type="number"
-                step="0.05"
-                value={refinanceRate}
-                onChange={(e) => setRefinanceRate(Number(e.target.value))}
-                className="w-full bg-white border border-[#c0b298] px-3 py-1.5 text-xs font-mono font-bold text-teal-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-600"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  step="0.05"
+                  value={refinanceRate}
+                  onChange={(e) => setRefinanceRate(Number(e.target.value))}
+                  className="w-full bg-white border border-teal-300 pl-3 pr-8 py-1.5 text-xs font-mono font-bold text-teal-950 rounded-lg outline-none focus:ring-2 focus:ring-teal-600"
+                />
+                <span className="absolute right-2.5 text-xs text-teal-700 font-mono">%</span>
+              </div>
+              <span className="text-[10px] text-teal-700 block">ธนาคารใหม่ (เฉลี่ย 3 ปี)</span>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-[#70644e] mb-1">
+            {/* Input 3: Appraisal & Misc Fee */}
+            <div className="bg-white/80 p-3 rounded-xl border border-[#c0b298]/50 space-y-1.5">
+              <label className="block text-[11px] font-bold text-[#70644e]">
                 ค่าประเมิน + ค่าธรรมเนียม
               </label>
-              <input
-                type="number"
-                value={appraisalFee + miscFee}
-                onChange={(e) => setAppraisalFee(Number(e.target.value))}
-                className="w-full bg-white border border-[#c0b298] px-3 py-1.5 text-xs font-mono text-[#4a3e26] rounded-xl outline-none focus:ring-2 focus:ring-amber-600"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  value={appraisalFee + miscFee}
+                  onChange={(e) => {
+                    const total = Number(e.target.value);
+                    setAppraisalFee(Math.max(0, total - miscFee));
+                  }}
+                  className="w-full bg-white border border-[#c0b298] pl-3 pr-8 py-1.5 text-xs font-mono text-[#4a3e26] rounded-lg outline-none focus:ring-2 focus:ring-amber-600"
+                />
+                <span className="absolute right-2.5 text-xs text-[#70644e]">บ.</span>
+              </div>
+              <span className="text-[10px] text-[#8c7b5f] block">ประเมิน ~3,000 + อื่นๆ</span>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-[#70644e] mb-1">
-                ค่าจดจำนอง ({mortgageRegRate}%)
+            {/* Input 4: Mortgage Registration Fee */}
+            <div className="bg-white/80 p-3 rounded-xl border border-[#c0b298]/50 space-y-1.5">
+              <label className="block text-[11px] font-bold text-[#70644e]">
+                ค่าจดจำนอง (บาท)
               </label>
-              <div className="text-xs font-mono font-bold text-[#4a3e26] py-1.5 bg-white border border-[#c0b298]/50 px-3 rounded-xl">
-                {formatCurrency(mortgageRegFee)} บ.
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  min="0"
+                  value={mortgageRegFee}
+                  onChange={(e) => {
+                    const val = Math.max(0, Number(e.target.value));
+                    setCustomMortgageFee(val);
+                  }}
+                  className="w-full bg-white border border-[#c0b298] pl-3 pr-8 py-1.5 text-xs font-mono font-bold text-[#4a3e26] rounded-lg outline-none focus:ring-2 focus:ring-amber-600 shadow-2xs"
+                />
+                <span className="absolute right-2.5 text-xs text-[#70644e]">บ.</span>
               </div>
+
+              {/* Quick Select Buttons below input */}
+              <div className="grid grid-cols-3 gap-1 pt-0.5">
+                {[
+                  { label: '1% ปกติ', rate: 1.0 },
+                  { label: '0.01% รัฐ', rate: 0.01 },
+                  { label: '0.5% โปร', rate: 0.5 }
+                ].map((opt) => {
+                  const isSelected = mortgageRegRate === opt.rate && customMortgageFee === null;
+                  return (
+                    <button
+                      key={opt.rate}
+                      type="button"
+                      onClick={() => {
+                        setMortgageRegRate(opt.rate);
+                        setCustomMortgageFee(null);
+                      }}
+                      className={`py-1 px-1.5 text-[10px] font-bold rounded-lg border transition-all cursor-pointer text-center ${
+                        isSelected
+                          ? 'bg-amber-700 text-white border-amber-800 shadow-2xs'
+                          : 'bg-white text-[#4a3e26] border-[#c0b298]/60 hover:bg-amber-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {customMortgageFee !== null && customMortgageFee !== autoMortgageFee && (
+                <button
+                  type="button"
+                  onClick={() => setCustomMortgageFee(null)}
+                  className="text-[10px] text-amber-800 hover:underline block cursor-pointer font-medium mt-1"
+                >
+                  ↺ คำนวณออโต้ตามอัตราส่วน ({formatCurrency(autoMortgageFee)} บ.)
+                </button>
+              )}
             </div>
           </div>
         </div>
