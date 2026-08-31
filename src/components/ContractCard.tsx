@@ -178,7 +178,7 @@ export default function ContractCard({
       </div>
 
       {/* Top Section */}
-      <div className="pr-10">
+      <div className="pr-14">
         <div>
           {/* Bank name */}
           <div className={`flex items-center gap-1.5 text-xs ${textSecondary} font-medium mb-1 min-w-0`}>
@@ -187,7 +187,7 @@ export default function ContractCard({
           </div>
           {/* Contract Nickname */}
           <h3 className={`text-[16px] font-bold ${textPrimary} font-sans flex items-center gap-0.5 ${!isInactive ? 'group-hover:text-[#7d6840]' : ''} transition-colors line-clamp-1`}>
-            {contract.nickname}
+            <span className="truncate">{contract.nickname}</span>
             <ArrowUpRight className={`w-3.5 h-3.5 opacity-0 ${!isInactive ? 'group-hover:opacity-100 text-[#7d6840]' : ''} transition-opacity shrink-0`} />
           </h3>
         </div>

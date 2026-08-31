@@ -474,7 +474,7 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
 
             <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
               {interestRates.map((row, index) => (
-                <div key={index} className="flex items-center gap-3 bg-[#fbfbfa] p-2 border border-[#e6e4d5] rounded-sm">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-[#fbfbfa] p-2.5 sm:p-2 border border-[#e6e4d5] rounded-sm">
                   {/* Effective Date */}
                   <div className="flex-1">
                     <span className="text-[10px] text-gray-400 block mb-0.5">มีผลตั้งแต่วันที่:</span>
@@ -483,36 +483,36 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
                       required
                       value={row.effectiveDate}
                       onChange={(e) => handleRateRowChange(index, 'effectiveDate', e.target.value)}
-                      className="w-full bg-white border border-[#c0b298] px-2 py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
+                      className="w-full bg-white border border-[#c0b298] px-2 py-1.5 sm:py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
                     />
                   </div>
 
                   {/* Rate % */}
-                  <div className="w-32">
-                    <span className="text-[10px] text-gray-400 block mb-0.5">อัตราดอกเบี้ย (%) ต่อปี:</span>
-                    <div className="relative flex items-center">
-                      <input
-                        type="number"
-                        required
-                        min="0"
-                        max="30"
-                        step="0.01"
-                        value={row.rate}
-                        onChange={(e) => handleRateRowChange(index, 'rate', e.target.value)}
-                        placeholder="เช่น 3.5"
-                        className="w-full bg-white border border-[#c0b298] pl-2 pr-6 py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
-                      />
-                      <span className="absolute right-2 text-xs text-gray-400">%</span>
+                  <div className="flex items-end gap-2 w-full sm:w-36">
+                    <div className="flex-1">
+                      <span className="text-[10px] text-gray-400 block mb-0.5">อัตราดอกเบี้ย (%) ต่อปี:</span>
+                      <div className="relative flex items-center">
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          max="30"
+                          step="0.01"
+                          value={row.rate}
+                          onChange={(e) => handleRateRowChange(index, 'rate', e.target.value)}
+                          placeholder="เช่น 3.5"
+                          className="w-full bg-white border border-[#c0b298] pl-2 pr-6 py-1.5 sm:py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
+                        />
+                        <span className="absolute right-2 text-xs text-gray-400">%</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Remove Button */}
-                  <div className="pt-4">
+                    {/* Remove Button */}
                     <button
                       type="button"
                       disabled={interestRates.length <= 1}
                       onClick={() => handleRemoveRateRow(index)}
-                      className="text-gray-400 hover:text-red-600 disabled:opacity-30 p-1.5 transition-colors cursor-pointer"
+                      className="text-gray-400 hover:text-red-600 disabled:opacity-30 p-2 sm:p-1.5 transition-colors cursor-pointer"
                       title="ลบแถวนี้"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -545,7 +545,7 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
 
             <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
               {installmentSchedules.map((row, index) => (
-                <div key={index} className="flex items-center gap-3 bg-[#fbfbfa] p-2 border border-[#e6e4d5] rounded-sm">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-[#fbfbfa] p-2.5 sm:p-2 border border-[#e6e4d5] rounded-sm">
                   {/* Effective Date */}
                   <div className="flex-1">
                     <span className="text-[10px] text-gray-400 block mb-0.5">มีผลตั้งแต่วันที่:</span>
@@ -554,35 +554,35 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
                       required
                       value={row.effectiveDate}
                       onChange={(e) => handleInstallmentRowChange(index, 'effectiveDate', e.target.value)}
-                      className="w-full bg-white border border-[#c0b298] px-2 py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
+                      className="w-full bg-white border border-[#c0b298] px-2 py-1.5 sm:py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
                     />
                   </div>
 
                   {/* Amount */}
-                  <div className="w-36">
-                    <span className="text-[10px] text-gray-400 block mb-0.5">ค่างวดปกติ (บาท):</span>
-                    <div className="relative flex items-center">
-                      <input
-                        type="number"
-                        required
-                        min="100"
-                        step="any"
-                        value={row.amount}
-                        onChange={(e) => handleInstallmentRowChange(index, 'amount', e.target.value)}
-                        placeholder="เช่น 18000"
-                        className="w-full bg-white border border-[#c0b298] pl-2 pr-10 py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
-                      />
-                      <span className="absolute right-2 text-xs text-gray-400 font-mono">บาท</span>
+                  <div className="flex items-end gap-2 w-full sm:w-40">
+                    <div className="flex-1">
+                      <span className="text-[10px] text-gray-400 block mb-0.5">ค่างวดปกติ (บาท):</span>
+                      <div className="relative flex items-center">
+                        <input
+                          type="number"
+                          required
+                          min="100"
+                          step="any"
+                          value={row.amount}
+                          onChange={(e) => handleInstallmentRowChange(index, 'amount', e.target.value)}
+                          placeholder="เช่น 18000"
+                          className="w-full bg-white border border-[#c0b298] pl-2 pr-10 py-1.5 sm:py-1 text-xs text-[#4a3e26] rounded-sm focus:outline-none"
+                        />
+                        <span className="absolute right-2 text-xs text-gray-400 font-mono">บาท</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Remove Button */}
-                  <div className="pt-4">
+                    {/* Remove Button */}
                     <button
                       type="button"
                       disabled={installmentSchedules.length <= 1}
                       onClick={() => handleRemoveInstallmentRow(index)}
-                      className="text-gray-400 hover:text-red-600 disabled:opacity-30 p-1.5 transition-colors cursor-pointer"
+                      className="text-gray-400 hover:text-red-600 disabled:opacity-30 p-2 sm:p-1.5 transition-colors cursor-pointer"
                       title="ลบแถวนี้"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -620,26 +620,26 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
                   type="button"
                   onClick={() => setShowConfirmDelete(true)}
                   disabled={loading}
-                  className="order-last sm:order-first px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-sm border border-red-200 transition-colors cursor-pointer"
+                  className="order-last sm:order-first px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-sm border border-red-200 transition-colors cursor-pointer text-center"
                 >
                   ลบสัญญานี้
                 </button>
               )
             ) : <div />}
 
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 border border-[#c0b298] text-[#70644e] text-sm font-medium rounded-sm hover:bg-[#f4f3ea] transition-colors cursor-pointer"
+                className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 border border-[#c0b298] text-[#70644e] text-sm font-medium rounded-sm hover:bg-[#f4f3ea] transition-colors cursor-pointer text-center"
               >
                 ยกเลิก
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-[#7d6840] hover:bg-[#685533] text-white text-sm font-medium rounded-sm shadow-sm transition-colors cursor-pointer"
+                className="flex-1 sm:flex-initial px-6 py-2.5 sm:py-2 bg-[#7d6840] hover:bg-[#685533] text-white text-sm font-medium rounded-sm shadow-sm transition-colors cursor-pointer text-center"
               >
                 {loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
               </button>

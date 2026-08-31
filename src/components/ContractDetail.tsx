@@ -561,16 +561,16 @@ export default function ContractDetail({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7d6840] hover:text-[#5d4d2e] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7d6840] hover:text-[#5d4d2e] transition-colors cursor-pointer py-1"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>กลับไปหน้าแรก</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => onRecordPayment(firstUnpaid?.installmentIndex || 1)}
-            className="flex items-center gap-1.5 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold px-4 py-2 shadow-xs rounded-sm transition-colors cursor-pointer"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold px-4 py-2.5 shadow-xs rounded-sm transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>บันทึกการชำระเงินงวดใหม่</span>
@@ -578,7 +578,7 @@ export default function ContractDetail({
           
           <button
             onClick={onEditContract}
-            className="flex items-center gap-1.5 border border-[#c0b298] text-[#70644e] hover:bg-[#e8ebe0] text-xs font-semibold px-4 py-2 rounded-sm transition-colors cursor-pointer"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 border border-[#c0b298] text-[#70644e] hover:bg-[#e8ebe0] text-xs font-semibold px-4 py-2.5 rounded-sm transition-colors cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
             <span>แก้ไขสัญญา</span>
@@ -587,7 +587,7 @@ export default function ContractDetail({
       </div>
 
       {/* Contract Core Info Cards Box */}
-      <div className="relative bg-[#fbfbfa] border border-[#c0b298] p-5 md:p-6 shadow-sm rounded-sm">
+      <div className="relative bg-[#fbfbfa] border border-[#c0b298] p-4 sm:p-5 md:p-6 shadow-sm rounded-sm">
         {/* Retro style corners */}
         <div className="absolute top-2 left-2 w-4 h-4 border-t border-l border-[#7d6840]" />
         <div className="absolute top-2 right-2 w-4 h-4 border-t border-r border-[#7d6840]" />
@@ -595,22 +595,22 @@ export default function ContractDetail({
         <div className="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-[#7d6840]" />
 
         {/* Retro Ink Stamp [%ผ่อนแล้ว] overlapping the top-right corner */}
-        <div className="absolute -top-4 -right-4 w-[76px] h-[76px] rounded-full border-2 border-dashed border-[#7d6840] bg-[#fbfbfa] shadow-md flex flex-col items-center justify-center -rotate-12 z-10 transition-transform hover:scale-105">
+        <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full border-2 border-dashed border-[#7d6840] bg-[#fbfbfa] shadow-md flex flex-col items-center justify-center -rotate-12 z-10 transition-transform hover:scale-105">
           <div className="absolute inset-0.5 rounded-full border border-double border-[#7d6840]/35" />
           <div className="text-center">
-            <div className="text-[17px] font-mono font-black text-[#7d6840] tracking-tighter leading-none">
+            <div className="text-[15px] sm:text-[17px] font-mono font-black text-[#7d6840] tracking-tighter leading-none">
               {percentPaid}%
             </div>
-            <div className="text-[8px] text-[#7d6840] font-sans font-extrabold uppercase tracking-wider mt-0.5 leading-none">
+            <div className="text-[7.5px] sm:text-[8px] text-[#7d6840] font-sans font-extrabold uppercase tracking-wider mt-0.5 leading-none">
               ผ่อนแล้ว
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 justify-between lg:items-center">
-          <div className="space-y-1.5 pr-8">
-            <div className="flex items-center gap-2 text-[#7d6840] text-xs font-medium">
-              <Landmark className="w-4 h-4" />
+        <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 justify-between lg:items-center">
+          <div className="space-y-1.5 pr-14 sm:pr-20 lg:pr-8">
+            <div className="flex items-center gap-2 text-[#7d6840] text-xs font-medium flex-wrap">
+              <Landmark className="w-4 h-4 shrink-0" />
               <span>{contract.bankName}</span>
               <span className="text-gray-300">|</span>
               <span>เริ่มผ่อน {formatThaiDate(contract.startDate)}</span>
@@ -626,7 +626,7 @@ export default function ContractDetail({
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl md:text-2xl font-bold text-[#4a3e26] font-sans">
+              <h2 className="text-xl md:text-2xl font-bold text-[#4a3e26] font-sans break-words">
                 {contract.nickname}
               </h2>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border ${
@@ -644,22 +644,22 @@ export default function ContractDetail({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-[#e8ebe0] p-4 border border-[#e6e4d5] rounded-sm flex-1 max-w-2xl">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 bg-[#e8ebe0] p-3.5 sm:p-4 border border-[#e6e4d5] rounded-sm flex-1 max-w-2xl">
             <div>
               <span className="text-[10px] text-[#7d6840] block uppercase font-medium">ยอดคงเหลือปัจจุบัน</span>
-              <span className="text-sm font-bold text-[#4a3e26]">{formatCurrency(remainingBalance)} บาท</span>
+              <span className="text-xs sm:text-sm font-bold text-[#4a3e26] font-mono">{formatCurrency(remainingBalance)} บาท</span>
             </div>
             <div>
               <span className="text-[10px] text-[#7d6840] block uppercase font-medium">ค่างวดปกติต่อเดือน</span>
-              <span className="text-sm font-bold text-[#4a3e26]">{formatCurrency(contract.monthlyInstallment)} บาท</span>
+              <span className="text-xs sm:text-sm font-bold text-[#4a3e26] font-mono">{formatCurrency(contract.monthlyInstallment)} บาท</span>
             </div>
             <div>
               <span className="text-[10px] text-[#7d6840] block uppercase font-medium">ยอดโปะเพิ่มสะสม</span>
-              <span className="text-sm font-bold text-emerald-800">{formatCurrency(totalExtraPaidAmount)} บาท</span>
+              <span className="text-xs sm:text-sm font-bold text-emerald-800 font-mono">{formatCurrency(totalExtraPaidAmount)} บาท</span>
             </div>
             <div>
               <span className="text-[10px] text-[#7d6840] block uppercase font-medium">เปอร์เซ็นต์ผ่อนแล้ว</span>
-              <span className="text-sm font-bold text-[#4a3e26]">{percentPaid}%</span>
+              <span className="text-xs sm:text-sm font-bold text-[#4a3e26] font-mono">{percentPaid}%</span>
             </div>
           </div>
         </div>

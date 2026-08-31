@@ -67,15 +67,15 @@ export default function Header({
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Left Side: Title */}
-        <div className="flex items-start gap-3">
-          <div className="space-y-1">
+        <div className="flex items-start gap-3 w-full md:w-auto">
+          <div className="space-y-1 w-full md:w-auto">
             <div className="flex items-center gap-2">
               <span className="text-[10px] md:text-xs tracking-widest text-[#7d6840] font-medium font-sans uppercase">
                 บันทึกภาระผูกพัน · HOME LOAN LEDGER
               </span>
             </div>
             {isEditingTitle ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full">
                 <input
                   type="text"
                   value={tempTitle}
@@ -88,26 +88,29 @@ export default function Header({
                       setIsEditingTitle(false);
                     }
                   }}
-                  className="text-xl md:text-2xl font-bold text-[#4a3e26] font-sans border-b border-[#7d6840] bg-transparent focus:outline-none focus:border-b-2 py-0.5 max-w-[300px] sm:max-w-[450px]"
+                  className="text-lg sm:text-xl md:text-2xl font-bold text-[#4a3e26] font-sans border-b border-[#7d6840] bg-transparent focus:outline-none focus:border-b-2 py-0.5 w-full sm:max-w-[450px]"
                   autoFocus
                 />
-                <button onClick={handleSaveTitle} className="p-1 text-emerald-700 hover:bg-[#e8ebe0] rounded-sm cursor-pointer">
-                  <Check className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    setTempTitle(title);
-                    setIsEditingTitle(false);
-                  }}
-                  className="p-1 text-red-600 hover:bg-[#e8ebe0] rounded-sm cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={handleSaveTitle} className="p-1.5 text-emerald-700 hover:bg-[#e8ebe0] rounded-sm cursor-pointer" title="บันทึก">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTempTitle(title);
+                      setIsEditingTitle(false);
+                    }}
+                    className="p-1.5 text-red-600 hover:bg-[#e8ebe0] rounded-sm cursor-pointer"
+                    title="ยกเลิก"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <h1 
                 onClick={() => setIsEditingTitle(true)}
-                className="group flex items-center gap-2 text-2xl md:text-3xl font-bold text-[#4a3e26] font-sans cursor-pointer hover:bg-[#ebdcb2]/20 px-2 py-0.5 -ml-2 rounded-lg transition-all duration-150"
+                className="group flex items-center gap-2 text-xl sm:text-2xl md:text-3xl font-bold text-[#4a3e26] font-sans cursor-pointer hover:bg-[#ebdcb2]/20 px-2 py-0.5 -ml-2 rounded-lg transition-all duration-150 break-words"
                 title="คลิกเพื่อแก้ไขชื่อบันทึก"
               >
                 <span>{title}</span>
@@ -118,13 +121,13 @@ export default function Header({
         </div>
 
         {/* Right Side: House Count + User Profile */}
-        <div className="flex flex-wrap items-center md:items-end justify-between md:justify-center gap-3">
-          <div className="flex flex-col md:items-end gap-1">
+        <div className="flex flex-wrap items-center md:items-end justify-between md:justify-end gap-3 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-[#e6e4d5]">
+          <div className="flex flex-col md:items-end gap-1.5 w-full md:w-auto">
             {/* House Count Banner */}
-            <div className="inline-flex items-center gap-2 text-xs md:text-sm text-[#7d6840] font-medium">
+            <div className="inline-flex items-center gap-2 text-xs md:text-sm text-[#7d6840] font-medium flex-wrap">
               <Home className="w-4 h-4 shrink-0" />
               {isEditingHouse ? (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <input
                     type="text"
                     value={tempHouse}
@@ -137,11 +140,11 @@ export default function Header({
                         setIsEditingHouse(false);
                       }
                     }}
-                    className="text-xs md:text-sm text-[#7d6840] font-sans border-b border-[#7d6840] bg-transparent focus:outline-none focus:border-b-2 py-0.5 max-w-[150px] font-medium"
+                    className="text-xs md:text-sm text-[#7d6840] font-sans border-b border-[#7d6840] bg-transparent focus:outline-none focus:border-b-2 py-0.5 w-28 sm:w-36 font-medium"
                     autoFocus
                   />
                   <span>· {totalContractsCount} สัญญา</span>
-                  <button onClick={handleSaveHouse} className="p-0.5 text-emerald-700 hover:bg-[#e8ebe0] rounded-xs cursor-pointer">
+                  <button onClick={handleSaveHouse} className="p-1 text-emerald-700 hover:bg-[#e8ebe0] rounded-xs cursor-pointer" title="บันทึก">
                     <Check className="w-3.5 h-3.5" />
                   </button>
                   <button
@@ -149,7 +152,8 @@ export default function Header({
                       setTempHouse(houseNumber);
                       setIsEditingHouse(false);
                     }}
-                    className="p-0.5 text-red-600 hover:bg-[#e8ebe0] rounded-xs cursor-pointer"
+                    className="p-1 text-red-600 hover:bg-[#e8ebe0] rounded-xs cursor-pointer"
+                    title="ยกเลิก"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -168,22 +172,22 @@ export default function Header({
 
             {/* User Profile & Logout */}
             {user && (
-              <div className="flex items-center gap-3 text-xs text-[#70644e]">
-                <div className="flex items-center gap-1.5 bg-[#e8ebe0] px-2 py-0.5 border border-[#e6e4d5] rounded-lg">
+              <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-[#70644e] w-full md:w-auto">
+                <div className="flex items-center gap-1.5 bg-[#e8ebe0] px-2.5 py-1 border border-[#e6e4d5] rounded-lg">
                   {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName || ''} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />
+                    <img src={user.photoURL} alt={user.displayName || ''} className="w-4 h-4 rounded-full shrink-0" referrerPolicy="no-referrer" />
                   ) : (
-                    <User className="w-3 h-3 text-[#7d6840]" />
+                    <User className="w-3 h-3 text-[#7d6840] shrink-0" />
                   )}
-                  <span className="max-w-[120px] truncate">{user.displayName || user.email}</span>
+                  <span className="max-w-[120px] sm:max-w-[160px] truncate font-medium">{user.displayName || user.email}</span>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-1 hover:text-red-700 transition-colors duration-200 cursor-pointer"
+                  className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-[#e8ebe0] text-[#7d6840] hover:text-red-700 transition-colors duration-200 cursor-pointer shrink-0"
                   title="ออกจากระบบ"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">ออกจากระบบ</span>
+                  <span>ออกจากระบบ</span>
                 </button>
               </div>
             )}

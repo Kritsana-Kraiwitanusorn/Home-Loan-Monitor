@@ -185,7 +185,7 @@ export default function RecordPaymentModal({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Installment Index */}
             <div>
               <label className="block text-xs font-semibold text-[#7d6840] uppercase tracking-wider mb-1.5">
@@ -282,19 +282,19 @@ export default function RecordPaymentModal({
           </div>
 
           {/* Action buttons */}
-          <div className="border-t border-[#e6e4d5] pt-4 mt-6 flex justify-end gap-3">
+          <div className="border-t border-[#e6e4d5] pt-4 mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 border border-[#c0b298] text-[#70644e] text-sm font-medium rounded-sm hover:bg-[#f4f3ea] transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 border border-[#c0b298] text-[#70644e] text-sm font-medium rounded-sm hover:bg-[#f4f3ea] transition-colors cursor-pointer text-center"
             >
               ยกเลิก
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-[#7d6840] hover:bg-[#685533] text-white text-sm font-medium rounded-sm shadow-sm transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-6 py-2.5 bg-[#7d6840] hover:bg-[#685533] text-white text-sm font-medium rounded-sm shadow-sm transition-colors cursor-pointer text-center"
             >
               {loading ? 'กำลังบันทึก...' : 'บันทึกการจ่ายจริง'}
             </button>

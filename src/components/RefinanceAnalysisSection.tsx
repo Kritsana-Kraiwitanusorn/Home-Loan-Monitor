@@ -120,7 +120,7 @@ export default function RefinanceAnalysisSection({
               </select>
             </div>
 
-            <div className="text-left sm:text-right space-y-1">
+            <div className="text-left sm:text-right space-y-1 w-full sm:w-auto">
               <label className="text-xs font-bold text-[#70644e] block">
                 ยอดเงินต้นคงเหลือประเมิน (บาท):
               </label>
@@ -134,9 +134,9 @@ export default function RefinanceAnalysisSection({
                     const val = Math.max(0, Number(e.target.value));
                     setCustomBalanceMap(prev => ({ ...prev, [selectedContractId]: val }));
                   }}
-                  className="text-lg md:text-xl font-black text-[#4a3e26] font-mono bg-white border border-[#c0b298] px-3 py-1 rounded-xl text-right w-44 shadow-2xs focus:ring-2 focus:ring-amber-600 outline-none transition-all"
+                  className="text-lg md:text-xl font-black text-[#4a3e26] font-mono bg-white border border-[#c0b298] px-3 py-1 rounded-xl text-left sm:text-right w-full sm:w-44 shadow-2xs focus:ring-2 focus:ring-amber-600 outline-none transition-all"
                 />
-                <span className="text-xs font-bold text-[#70644e]">บาท</span>
+                <span className="text-xs font-bold text-[#70644e] shrink-0">บาท</span>
               </div>
               {customBalanceMap[selectedContractId] !== undefined && customBalanceMap[selectedContractId] !== calculatedBalance && (
                 <button

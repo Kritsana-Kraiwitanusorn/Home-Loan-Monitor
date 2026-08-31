@@ -172,7 +172,7 @@ export default function PrepaymentSimulator({
           </div>
 
           {/* Quick Choice Buttons */}
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             {[0, 2000, 5000, 10000, 15000, 20000, 30000, 50000].map((amt) => {
               const isSelected = extraAmount === amt;
               return (
@@ -180,7 +180,7 @@ export default function PrepaymentSimulator({
                   key={amt}
                   type="button"
                   onClick={() => setExtraAmount(amt)}
-                  className={`py-1.5 px-2 text-xs font-mono font-bold rounded-xl border transition-all cursor-pointer ${
+                  className={`py-1.5 px-2 text-xs font-mono font-bold rounded-xl border transition-all cursor-pointer text-center ${
                     isSelected
                       ? 'bg-teal-700 text-white border-teal-800 shadow-xs scale-[1.02]'
                       : 'bg-white text-[#4a3e26] border-[#c0b298]/70 hover:bg-teal-50 hover:border-teal-300'
@@ -292,7 +292,7 @@ export default function PrepaymentSimulator({
       {/* Amortization Curve Chart */}
       <div className="bg-white border border-[#e6e4d5] p-4 rounded-xl space-y-2">
         <h4 className="text-xs font-bold text-[#4a3e26]">กราฟเปรียบเทียบแนวโน้มยอดหนี้คงเหลือ (ปกติ vs โปะเพิ่ม)</h4>
-        <div className="h-64 relative">
+        <div className="h-64 sm:h-72 md:h-80 relative min-h-[220px]">
           <Line data={chartData} options={chartOptions} />
         </div>
       </div>
