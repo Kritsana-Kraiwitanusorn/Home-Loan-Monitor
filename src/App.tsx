@@ -20,6 +20,8 @@ import { calculateSummaryMetrics, generateAmortizationSchedule } from './lib/loa
 // Components
 import Header from './components/Header';
 import Overview from './components/Overview';
+import ResponsibleModal from './components/ResponsibleModal';
+import ToolsSidebar from './components/ToolsSidebar';
 import AllTimeOverview from './components/AllTimeOverview';
 import ContractCard from './components/ContractCard';
 import ContractDetail from './components/ContractDetail';
@@ -30,7 +32,7 @@ import DoughnutComparisonChart from './components/DoughnutComparisonChart';
 import PrepaymentSimulator from './components/PrepaymentSimulator';
 import RefinanceAnalysisSection from './components/RefinanceAnalysisSection';
 
-import { Landmark, Plus, RefreshCw, HelpCircle, Calculator, Zap } from 'lucide-react';
+import { Landmark, Plus, RefreshCw, HelpCircle, Calculator, Zap, LayoutDashboard, Layers, Filter, CheckCircle2, AlertCircle, Menu } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -44,7 +46,12 @@ export default function App() {
   const [appTitle, setAppTitle] = useState('บันทึกผ่อนบ้าน Best & Koy');
   const [houseNumber, setHouseNumber] = useState('บ้านเลขที่ 222/101');
 
-  // Navigation & Modals State
+  // Navigation & Tabs State
+  const [activeTab, setActiveTab] = useState<'overview' | 'contracts'>('overview');
+  const [contractsFilter, setContractsFilter] = useState<'all' | 'active' | 'closed'>('all');
+  const [showToolsDrawer, setShowToolsDrawer] = useState(false);
+
+  // Modals State
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [showAddContractModal, setShowAddContractModal] = useState(false);
   const [editingContract, setEditingContract] = useState<LoanContract | null>(null);
@@ -55,6 +62,7 @@ export default function App() {
   const [showAllTimeModal, setShowAllTimeModal] = useState(false);
   const [showRefinanceModal, setShowRefinanceModal] = useState(false);
   const [showSimulatorModal, setShowSimulatorModal] = useState(false);
+  const [showResponsibleModal, setShowResponsibleModal] = useState(false);
 
 
   // Monitor Auth State
@@ -360,6 +368,20 @@ export default function App() {
     }
   };
 
+  // Handle Quick Update Contract (e.g. from Responsible section or inline edit)
+  const handleUpdateContract = async (contractId: string, updates: Partial<LoanContract>) => {
+    if (!user) return;
+    try {
+      const docRef = doc(db, 'contracts', contractId);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'contracts');
+    }
+  };
+
   // Pre-seed mock data matching the image.png exactly
   const handlePreseedMockData = async () => {
     if (!user) return;
@@ -382,6 +404,8 @@ export default function App() {
         monthlyInstallment: 15000,
         dueDay: 5,
         status: 'Active',
+        responsiblePerson: 'Best',
+        plannedExtraPayment: 10000,
         interestRates: [
           { effectiveDate: '2026-01-01', rate: 3.5 }
         ],
@@ -403,6 +427,8 @@ export default function App() {
         monthlyInstallment: 6000,
         dueDay: 10,
         status: 'Active',
+        responsiblePerson: 'Koy',
+        plannedExtraPayment: 5000,
         interestRates: [
           { effectiveDate: '2026-01-01', rate: 3.2 }
         ],
@@ -424,6 +450,8 @@ export default function App() {
         monthlyInstallment: 4500,
         dueDay: 15,
         status: 'Active',
+        responsiblePerson: 'Best & Koy',
+        plannedExtraPayment: 3000,
         interestRates: [
           { effectiveDate: '2026-01-01', rate: 3.4 }
         ],
@@ -545,48 +573,33 @@ export default function App() {
     schedule: generateAmortizationSchedule(c, payments)
   }));
 
+  const activeContractsCount = contracts.filter((c) => c.status === 'Active' || !c.status).length;
+  const closedContractsCount = contracts.filter((c) => c.status === 'Closed' || c.status === 'Refinanced').length;
+
+  const filteredContractsWithSchedules = contractsWithSchedules.filter(({ contract }) => {
+    if (contractsFilter === 'active') {
+      return contract.status === 'Active' || !contract.status;
+    }
+    if (contractsFilter === 'closed') {
+      return contract.status === 'Closed' || contract.status === 'Refinanced';
+    }
+    return true;
+  });
+
   const metrics = calculateSummaryMetrics(sortedContracts, payments);
   const activeContractDetails = sortedContracts.find((c) => c.id === selectedContractId);
 
   return (
     <div className="min-h-screen bg-[#e8ebe0] text-[#4a3e26] font-sans pb-16">
-      <div className="max-w-6xl mx-auto px-5 py-4 md:px-6 md:py-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 py-4 md:px-6 md:py-6 space-y-6">
         
-        {/* Header & Overview Metrics for Dashboard view */}
-        {!activeContractDetails ? (
-          <div className="space-y-4 md:space-y-6">
-            <Header
-              totalContractsCount={contracts.filter((c) => c.status === 'Active' || !c.status).length}
-              title={appTitle}
-              houseNumber={houseNumber}
-              onSaveSettings={handleSaveSettings}
-            />
-            <Overview
-              totalBalance={metrics.totalBalance}
-              monthChangePercent={metrics.monthChangePercent}
-              totalExtraPaid={metrics.totalExtraPaid}
-              allTimePrincipalPaid={metrics.allTimePrincipalPaid}
-              allTimeInterestPaid={metrics.allTimeInterestPaid}
-              interestPercentageOfHomeValue={metrics.interestPercentageOfHomeValue}
-              remainingYearsMonthsStr={metrics.remainingYearsMonthsStr}
-              nextInstallmentText={metrics.nextInstallmentText}
-              nextInstallmentDateStr={metrics.nextInstallmentDateStr}
-              nextInstallmentAmount={metrics.nextInstallmentAmount}
-              allNextPayments={metrics.allNextPayments}
-              balancesBreakdown={metrics.balancesBreakdown}
-              extraPaidBreakdown={metrics.extraPaidBreakdown}
-              principalPaidBreakdown={metrics.principalPaidBreakdown}
-              interestPaidBreakdown={metrics.interestPaidBreakdown}
-            />
-          </div>
-        ) : (
-          <Header
-            totalContractsCount={contracts.filter((c) => c.status === 'Active' || !c.status).length}
-            title={appTitle}
-            houseNumber={houseNumber}
-            onSaveSettings={handleSaveSettings}
-          />
-        )}
+        {/* Header (Always Visible) */}
+        <Header
+          totalContractsCount={activeContractsCount}
+          title={appTitle}
+          houseNumber={houseNumber}
+          onSaveSettings={handleSaveSettings}
+        />
 
         {/* Loading Overlay for Firestore mutations */}
         {dataLoading && (
@@ -620,9 +633,88 @@ export default function App() {
             onImportPayments={handleImportPayments}
           />
         ) : (
-          /* DASHBOARD SUMMARY VIEW */
+          /* DASHBOARD VIEW WITH TABS & ACTION TOOLBAR */
           <div className="space-y-6">
-            {/* If zero contracts, show nice empty state with mock data prompt */}
+            
+            {/* Primary Navigation Tabs & Actions Toolbar */}
+            <div className="flex items-center justify-between flex-wrap gap-2.5 bg-[#fbfbfa] border border-[#c0b298] p-2 rounded-2xl shadow-2xs">
+              
+              {/* Left group: Tools Sidebar button + Tabs */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Sidebar Drawer Launcher */}
+                <button
+                  onClick={() => setShowToolsDrawer(true)}
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold text-[#7d6840] hover:text-[#4a3e26] bg-[#f4f3ea] hover:bg-[#e8ebe0] border border-[#c0b298] transition-all shadow-2xs cursor-pointer group shrink-0"
+                  title="เปิดเมนูเครื่องมือและการจัดการ (ผู้รับผิดชอบการชำระ, จำลองการโปะ, วิเคราะห์รีไฟแนนซ์)"
+                >
+                  <Menu className="w-4 h-4 text-[#7d6840] group-hover:scale-110 transition-transform shrink-0" />
+                  <span>เมนู & เครื่องมือ</span>
+                </button>
+
+                <div className="h-6 w-[1px] bg-[#c0b298]/60 hidden sm:block mx-0.5" />
+
+                {/* Tab 1: Overview */}
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === 'overview'
+                      ? 'bg-[#7d6840] text-white shadow-xs'
+                      : 'text-[#70644e] hover:bg-[#e8ebe0] hover:text-[#4a3e26]'
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>ภาพรวมสินเชื่อ</span>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                      activeTab === 'overview'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#e8ebe0] text-[#70644e]'
+                    }`}
+                  >
+                    Active: {activeContractsCount}
+                  </span>
+                </button>
+
+                {/* Tab 2: Loan Contracts List */}
+                <button
+                  onClick={() => setActiveTab('contracts')}
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === 'contracts'
+                      ? 'bg-[#7d6840] text-white shadow-xs'
+                      : 'text-[#70644e] hover:bg-[#e8ebe0] hover:text-[#4a3e26]'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>สัญญาสินเชื่อ</span>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                      activeTab === 'contracts'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#e8ebe0] text-[#70644e]'
+                    }`}
+                  >
+                    {contracts.length} สัญญา
+                  </span>
+                </button>
+              </div>
+
+              {/* Right group: Add New Contract Button */}
+              <div className="flex items-center ml-auto">
+                <button
+                  onClick={() => {
+                    setEditingContract(null);
+                    setShowAddContractModal(true);
+                  }}
+                  className="flex items-center gap-1.5 bg-[#7d6840] hover:bg-[#655230] text-white text-xs md:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xs hover:shadow-xs transition-all cursor-pointer transform active:scale-95 shrink-0"
+                  title="เพิ่มสัญญาสินเชื่อใหม่เข้าระบบ"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>เพิ่มสัญญาใหม่</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Zero Contracts Empty State */}
             {contracts.length === 0 ? (
               <div className="relative bg-[#fbfbfa] border border-[#c0b298]/80 p-10 text-center rounded-2xl shadow-sm space-y-6">
                 <div className="inline-flex p-4 rounded-full bg-[#e8ebe0] border border-[#c0b298] text-[#7d6840]">
@@ -657,105 +749,153 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              /* ACTIVE DASHBOARD ANALYTICS & CONTRACT CARDS */
-              <div className="space-y-6">
-                {/* Section 1: Active Contracts List & Action Toolbar */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <h2 className="text-lg font-bold text-[#4a3e26] font-sans">
-                      สัญญาสินเชื่อทั้งหมด ({contracts.length} สัญญา)
-                    </h2>
+              <>
+                {/* TAB 1: OVERVIEW */}
+                {activeTab === 'overview' && (
+                  <div className="space-y-6">
+                    {/* Top Overview Metric Cards */}
+                    <Overview
+                      totalBalance={metrics.totalBalance}
+                      monthChangePercent={metrics.monthChangePercent}
+                      totalExtraPaid={metrics.totalExtraPaid}
+                      allTimePrincipalPaid={metrics.allTimePrincipalPaid}
+                      allTimeInterestPaid={metrics.allTimeInterestPaid}
+                      interestPercentageOfHomeValue={metrics.interestPercentageOfHomeValue}
+                      remainingYearsMonthsStr={metrics.remainingYearsMonthsStr}
+                      nextInstallmentText={metrics.nextInstallmentText}
+                      nextInstallmentDateStr={metrics.nextInstallmentDateStr}
+                      nextInstallmentAmount={metrics.nextInstallmentAmount}
+                      allNextPayments={metrics.allNextPayments}
+                      balancesBreakdown={metrics.balancesBreakdown}
+                      extraPaidBreakdown={metrics.extraPaidBreakdown}
+                      principalPaidBreakdown={metrics.principalPaidBreakdown}
+                      interestPaidBreakdown={metrics.interestPaidBreakdown}
+                    />
+                  </div>
+                )}
 
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => setShowSimulatorModal(true)}
-                        className="flex items-center gap-1.5 bg-teal-50 border border-teal-300 hover:bg-teal-100 text-teal-900 text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
-                        title="ทดลองปรับยอดโปะเพิ่มต่อเดือนเพื่อดูสถิติการปิดบัญชีเร็วขึ้น"
-                      >
-                        <Zap className="w-3.5 h-3.5 text-teal-700" />
-                        <span>จำลองการโปะ</span>
-                      </button>
+                {/* TAB 2: CONTRACTS LIST & FILTERING */}
+                {activeTab === 'contracts' && (
+                  <div className="space-y-4">
+                    {/* Filter Bar & Toolbar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#fbfbfa] border border-[#c0b298] p-3.5 rounded-2xl shadow-2xs">
+                      
+                      {/* Status Filter Buttons */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-[#70644e] uppercase flex items-center gap-1 mr-1">
+                          <Filter className="w-3.5 h-3.5 text-[#7d6840]" />
+                          กรองสถานะ:
+                        </span>
 
-                      <button
-                        onClick={() => setShowRefinanceModal(true)}
-                        className="flex items-center gap-1.5 bg-amber-50/80 border border-amber-300 hover:bg-amber-100 text-amber-900 text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
-                        title="เปรียบเทียบความคุ้มค่าการรีไฟแนนซ์หรือขอลดดอกเบี้ย"
-                      >
-                        <Calculator className="w-3.5 h-3.5 text-amber-700" />
-                        <span>วิเคราะห์รีไฟแนนซ์</span>
-                      </button>
-
-                      {contracts.length > 0 && (
                         <button
-                          onClick={() => setShowAllTimeModal(true)}
-                          className="flex items-center gap-1.5 bg-[#fbfbfa] border border-[#c0b298] hover:bg-[#e6e4d5]/50 text-[#7d6840] hover:text-[#5e4e2f] text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
-                          title="ดูสรุปสถิติจ่ายรวมสะสมทั้งหมดของทุกบัญชี"
+                          onClick={() => setContractsFilter('all')}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                            contractsFilter === 'all'
+                              ? 'bg-[#7d6840] text-white border-[#7d6840] shadow-2xs'
+                              : 'bg-[#f4f3ea] text-[#70644e] border-[#c0b298]/60 hover:bg-[#e8ebe0]'
+                          }`}
                         >
-                          <span>ยอดชำระสะสมทั้งหมด</span>
+                          ทั้งหมด ({contracts.length})
                         </button>
-                      )}
 
-                      <button
-                        onClick={() => {
-                          setEditingContract(null);
-                          setShowAddContractModal(true);
-                        }}
-                        className="flex items-center gap-1.5 bg-[#7d6840] hover:bg-[#685533] text-white text-xs font-semibold px-3.5 py-2 shadow-xs rounded-xl transition-colors cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>เพิ่มสัญญาสินเชื่อ</span>
-                      </button>
+                        <button
+                          onClick={() => setContractsFilter('active')}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                            contractsFilter === 'active'
+                              ? 'bg-emerald-800 text-white border-emerald-800 shadow-2xs'
+                              : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>กำลังผ่อน / Active ({activeContractsCount})</span>
+                        </button>
+
+                        <button
+                          onClick={() => setContractsFilter('closed')}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                            contractsFilter === 'closed'
+                              ? 'bg-gray-800 text-white border-gray-800 shadow-2xs'
+                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                          }`}
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>ปิดสัญญา / รีไฟแนนซ์แล้ว ({closedContractsCount})</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Contracts Cards Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {contractsWithSchedules.map(({ contract, schedule }, index) => (
-                      <ContractCard
-                        key={contract.id}
-                        contract={contract}
-                        schedule={schedule}
-                        onSelect={(id) => setSelectedContractId(id)}
-                        onDragStart={(e, id) => {
-                          e.dataTransfer.effectAllowed = 'move';
-                          setDraggedContractId(id);
-                        }}
-                        onDragOver={(e, id) => {
-                          e.preventDefault();
-                        }}
-                        onDrop={(e, id) => {
-                          e.preventDefault();
-                          if (draggedContractId && draggedContractId !== id) {
-                            handleReorderContracts(draggedContractId, id);
-                          }
-                        }}
-                        onDragEnd={() => {
-                          setDraggedContractId(null);
-                        }}
-                        isDragging={draggedContractId === contract.id}
-                        onMove={handleMoveContract}
-                        isFirst={index === 0}
-                        isLast={index === contractsWithSchedules.length - 1}
-                      />
-                    ))}
+                    {/* Filtered Contracts Cards Grid */}
+                    {filteredContractsWithSchedules.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {filteredContractsWithSchedules.map(({ contract, schedule }, index) => (
+                          <ContractCard
+                            key={contract.id}
+                            contract={contract}
+                            schedule={schedule}
+                            onSelect={(id) => setSelectedContractId(id)}
+                            onDragStart={(e, id) => {
+                              e.dataTransfer.effectAllowed = 'move';
+                              setDraggedContractId(id);
+                            }}
+                            onDragOver={(e, id) => {
+                              e.preventDefault();
+                            }}
+                            onDrop={(e, id) => {
+                              e.preventDefault();
+                              if (draggedContractId && draggedContractId !== id) {
+                                handleReorderContracts(draggedContractId, id);
+                              }
+                            }}
+                            onDragEnd={() => {
+                              setDraggedContractId(null);
+                            }}
+                            isDragging={draggedContractId === contract.id}
+                            onMove={handleMoveContract}
+                            isFirst={index === 0}
+                            isLast={index === filteredContractsWithSchedules.length - 1}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-[#fbfbfa] border border-[#c0b298] p-8 text-center rounded-2xl">
+                        <p className="text-xs text-[#70644e]">
+                          ไม่มีสัญญาในตัวกรองนี้ ({contractsFilter === 'active' ? 'กำลังผ่อน' : 'ปิดสัญญาแล้ว'})
+                        </p>
+                        <button
+                          onClick={() => setContractsFilter('all')}
+                          className="mt-3 text-xs text-[#7d6840] font-bold hover:underline cursor-pointer"
+                        >
+                          แสดงสัญญาทั้งหมด ({contracts.length})
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                {/* Seed demo data reminder */}
-                <div className="text-center mt-6">
-                  <button
-                    onClick={handlePreseedMockData}
-                    className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#7d6840] transition-colors cursor-pointer"
-                    title="คลิกเพื่อรีเซ็ตหรือเขียนข้อมูลสัญญาทดลองทับลงบนคลาวด์ของคุณ"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    <span>ต้องการโหลดตัวอย่างสัญญาทั้ง 3 ตามรูปภาพสกรีนช็อตหรือไม่? คลิกเพื่อสร้างตัวอย่าง</span>
-                  </button>
-                </div>
-              </div>
+                )}
+              </>
             )}
           </div>
         )}
+
+        {/* DRAWER: LEFT TOOLS SIDEBAR (HAMBURGER MENU) */}
+        <ToolsSidebar
+          isOpen={showToolsDrawer}
+          onClose={() => setShowToolsDrawer(false)}
+          onOpenResponsible={() => setShowResponsibleModal(true)}
+          onOpenSimulator={() => setShowSimulatorModal(true)}
+          onOpenRefinance={() => setShowRefinanceModal(true)}
+          onOpenAllTime={() => setShowAllTimeModal(true)}
+          onPreseedDemo={handlePreseedMockData}
+          contractsCount={contracts.length}
+        />
+
+        {/* MODAL: RESPONSIBLE BREAKDOWN */}
+        <ResponsibleModal
+          isOpen={showResponsibleModal}
+          onClose={() => setShowResponsibleModal(false)}
+          contracts={sortedContracts}
+          payments={payments}
+          onUpdateContract={handleUpdateContract}
+        />
 
         {/* MODAL: ADD / EDIT CONTRACT */}
         {showAddContractModal && (

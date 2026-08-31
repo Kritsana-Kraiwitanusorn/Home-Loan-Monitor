@@ -19,6 +19,8 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
   const [dueDay, setDueDay] = useState<number>(5);
   const [status, setStatus] = useState<'Active' | 'Closed' | 'Refinanced'>('Active');
   const [interestCalcMethod, setInterestCalcMethod] = useState<'daily_365' | 'daily_actual' | 'monthly' | 'yearly'>('monthly');
+  const [responsiblePerson, setResponsiblePerson] = useState('Best & Koy');
+  const [plannedExtraPayment, setPlannedExtraPayment] = useState<number>(0);
   
   // Manage interest rate history list
   const [interestRates, setInterestRates] = useState<InterestRate[]>([
@@ -46,6 +48,8 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
       setDueDay(contract.dueDay);
       setStatus(contract.status);
       setInterestCalcMethod(contract.interestCalcMethod || 'monthly');
+      setResponsiblePerson(contract.responsiblePerson || 'Best & Koy');
+      setPlannedExtraPayment(contract.plannedExtraPayment ?? 0);
       setInterestRates(contract.interestRates && contract.interestRates.length > 0 ? [...contract.interestRates] : [{ effectiveDate: contract.startDate, rate: 3.5 }]);
       setInstallmentSchedules(
         contract.installmentSchedules && contract.installmentSchedules.length > 0
@@ -56,6 +60,8 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
       // Setup initial rate effective date automatically on mount
       setInterestRates([{ effectiveDate: startDate, rate: 3.5 }]);
       setInstallmentSchedules([{ effectiveDate: startDate, amount: monthlyInstallment }]);
+      setResponsiblePerson('Best & Koy');
+      setPlannedExtraPayment(0);
     }
   }, [contract]);
 
@@ -198,6 +204,8 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
         dueDay,
         status,
         interestCalcMethod,
+        responsiblePerson: responsiblePerson.trim() || 'Best & Koy',
+        plannedExtraPayment: plannedExtraPayment || 0,
         interestRates: sortedRates,
         installmentSchedules: sortedInstallments
       });
@@ -411,6 +419,36 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
                 <option value="daily_actual">แบบรายวันเฉลี่ยปีจริง (365/366 วัน ตามปฏิทิน)</option>
                 <option value="yearly">แบบรายปี (หารเฉลี่ยตามปีจริง)</option>
               </select>
+            </div>
+
+            {/* Responsible Person */}
+            <div>
+              <label className="block text-xs font-semibold text-[#7d6840] uppercase tracking-wider mb-1.5">
+                ผู้รับผิดชอบการชำระ (Responsible)
+              </label>
+              <input
+                type="text"
+                value={responsiblePerson}
+                onChange={(e) => setResponsiblePerson(e.target.value)}
+                placeholder="เช่น Best, Koy, Best & Koy (50/50)"
+                className="w-full bg-white border border-[#c0b298] px-3 py-2 text-sm text-[#4a3e26] rounded-sm focus:outline-none focus:border-[#7d6840]"
+              />
+            </div>
+
+            {/* Planned Extra Payment */}
+            <div>
+              <label className="block text-xs font-semibold text-[#7d6840] uppercase tracking-wider mb-1.5">
+                ยอดโปะเพิ่มรายเดือนที่วางแผน (Extra Payment)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={plannedExtraPayment}
+                onChange={(e) => setPlannedExtraPayment(Math.max(0, parseFloat(e.target.value) || 0))}
+                placeholder="เช่น 5000"
+                className="w-full bg-white border border-[#c0b298] px-3 py-2 text-sm text-[#4a3e26] rounded-sm focus:outline-none focus:border-[#7d6840]"
+              />
             </div>
           </div>
 

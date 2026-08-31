@@ -22,6 +22,8 @@ export interface LoanContract {
   interestRates: InterestRate[];
   interestCalcMethod?: 'daily_365' | 'daily_actual' | 'monthly' | 'yearly';
   installmentSchedules?: InstallmentSchedule[];
+  responsiblePerson?: string; // e.g., 'Best', 'Koy', 'Best & Koy'
+  plannedExtraPayment?: number; // Target extra payment per month
   createdAt: string;
   updatedAt: string;
   sortOrder?: number;
