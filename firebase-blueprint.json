@@ -15,6 +15,9 @@
         "status": { "type": "string", "enum": ["Active", "Closed", "Refinanced"] },
         "interestRates": { "type": "array" },
         "installmentSchedules": { "type": "array" },
+        "responsiblePerson": { "type": "string" },
+        "responsibleShares": { "type": "array" },
+        "plannedExtraPayment": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" },
         "sortOrder": { "type": "number" }

@@ -8,6 +8,11 @@ export interface InstallmentSchedule {
   amount: number; // Scheduled monthly payment amount
 }
 
+export interface ResponsibleShare {
+  name: string; // Name of person e.g. 'Best', 'Koy'
+  amount: number; // Amount paid by this person in Baht
+}
+
 export interface LoanContract {
   id: string;
   userId: string;
@@ -23,6 +28,7 @@ export interface LoanContract {
   interestCalcMethod?: 'daily_365' | 'daily_actual' | 'monthly' | 'yearly';
   installmentSchedules?: InstallmentSchedule[];
   responsiblePerson?: string; // e.g., 'Best', 'Koy', 'Best & Koy'
+  responsibleShares?: ResponsibleShare[]; // Detailed breakdown per person
   plannedExtraPayment?: number; // Target extra payment per month
   createdAt: string;
   updatedAt: string;

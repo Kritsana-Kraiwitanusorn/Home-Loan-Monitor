@@ -637,75 +637,74 @@ export default function App() {
           <div className="space-y-6">
             
             {/* Primary Navigation Tabs & Actions Toolbar */}
-            <div className="flex items-center justify-between flex-wrap gap-2.5 bg-[#fbfbfa] border border-[#c0b298] p-2 rounded-2xl shadow-2xs">
+            <div className="bg-[#fbfbfa] border border-[#c0b298] p-2 sm:p-2.5 rounded-2xl shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
               
-              {/* Left group: Tools Sidebar button + Tabs */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Sidebar Drawer Launcher */}
-                <button
-                  onClick={() => setShowToolsDrawer(true)}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold text-[#7d6840] hover:text-[#4a3e26] bg-[#f4f3ea] hover:bg-[#e8ebe0] border border-[#c0b298] transition-all shadow-2xs cursor-pointer group shrink-0"
-                  title="เปิดเมนูเครื่องมือและการจัดการ (ผู้รับผิดชอบการชำระ, จำลองการโปะ, วิเคราะห์รีไฟแนนซ์)"
-                >
-                  <Menu className="w-4 h-4 text-[#7d6840] group-hover:scale-110 transition-transform shrink-0" />
-                  <span>เมนู & เครื่องมือ</span>
-                </button>
-
-                <div className="h-6 w-[1px] bg-[#c0b298]/60 hidden sm:block mx-0.5" />
-
+              {/* Tabs Section (Top on mobile, left on desktop) */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 bg-[#f4f3ea] md:bg-transparent p-1 md:p-0 rounded-xl md:rounded-none border border-[#c0b298]/40 md:border-none">
                 {/* Tab 1: Overview */}
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === 'overview'
                       ? 'bg-[#7d6840] text-white shadow-xs'
                       : 'text-[#70644e] hover:bg-[#e8ebe0] hover:text-[#4a3e26]'
                   }`}
                 >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>ภาพรวมสินเชื่อ</span>
+                  <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                  <span>ภาพรวม</span>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                    className={`text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ${
                       activeTab === 'overview'
                         ? 'bg-white/20 text-white'
                         : 'bg-[#e8ebe0] text-[#70644e]'
                     }`}
                   >
-                    Active: {activeContractsCount}
+                    {activeContractsCount}
                   </span>
                 </button>
 
                 {/* Tab 2: Loan Contracts List */}
                 <button
                   onClick={() => setActiveTab('contracts')}
-                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === 'contracts'
                       ? 'bg-[#7d6840] text-white shadow-xs'
                       : 'text-[#70644e] hover:bg-[#e8ebe0] hover:text-[#4a3e26]'
                   }`}
                 >
-                  <Layers className="w-4 h-4" />
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                   <span>สัญญาสินเชื่อ</span>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                    className={`text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ${
                       activeTab === 'contracts'
                         ? 'bg-white/20 text-white'
                         : 'bg-[#e8ebe0] text-[#70644e]'
                     }`}
                   >
-                    {contracts.length} สัญญา
+                    {contracts.length}
                   </span>
                 </button>
               </div>
 
-              {/* Right group: Add New Contract Button */}
-              <div className="flex items-center ml-auto">
+              {/* Action Buttons: Tools Drawer & Add Contract (Row on mobile & desktop) */}
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                {/* Sidebar Drawer Launcher */}
+                <button
+                  onClick={() => setShowToolsDrawer(true)}
+                  className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold text-[#7d6840] hover:text-[#4a3e26] bg-[#f4f3ea] hover:bg-[#e8ebe0] border border-[#c0b298] transition-all shadow-2xs cursor-pointer group shrink-0"
+                  title="เปิดเมนูเครื่องมือและการจัดการ (ผู้รับผิดชอบการชำระ, จำลองการโปะ, วิเคราะห์รีไฟแนนซ์)"
+                >
+                  <Menu className="w-4 h-4 text-[#7d6840] group-hover:scale-110 transition-transform shrink-0" />
+                  <span>เมนู & เครื่องมือ</span>
+                </button>
+
+                {/* Add New Contract Button */}
                 <button
                   onClick={() => {
                     setEditingContract(null);
                     setShowAddContractModal(true);
                   }}
-                  className="flex items-center gap-1.5 bg-[#7d6840] hover:bg-[#655230] text-white text-xs md:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xs hover:shadow-xs transition-all cursor-pointer transform active:scale-95 shrink-0"
+                  className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-[#7d6840] hover:bg-[#655230] text-white text-xs md:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xs hover:shadow-xs transition-all cursor-pointer transform active:scale-95 shrink-0"
                   title="เพิ่มสัญญาสินเชื่อใหม่เข้าระบบ"
                 >
                   <Plus className="w-4 h-4 stroke-[2.5]" />

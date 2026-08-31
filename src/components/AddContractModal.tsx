@@ -430,9 +430,25 @@ export default function AddContractModal({ contract, onClose, onSave, onDelete }
                 type="text"
                 value={responsiblePerson}
                 onChange={(e) => setResponsiblePerson(e.target.value)}
-                placeholder="เช่น Best, Koy, Best & Koy (50/50)"
+                placeholder="เช่น Best, Koy, Best & Koy"
                 className="w-full bg-white border border-[#c0b298] px-3 py-2 text-sm text-[#4a3e26] rounded-sm focus:outline-none focus:border-[#7d6840]"
               />
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {['Best', 'Koy', 'Best & Koy', 'Best 70% / Koy 30%', 'Best 50% / Koy 50%'].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setResponsiblePerson(preset)}
+                    className={`text-[10px] px-2 py-0.5 rounded border transition-all cursor-pointer ${
+                      responsiblePerson === preset
+                        ? 'bg-[#7d6840] text-white border-[#7d6840]'
+                        : 'bg-[#f4f3ea] text-[#70644e] border-[#c0b298]/60 hover:bg-[#e8ebe0]'
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Planned Extra Payment */}

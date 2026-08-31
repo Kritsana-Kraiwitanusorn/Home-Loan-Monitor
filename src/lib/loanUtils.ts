@@ -749,3 +749,68 @@ export function exportPaymentsToCSV(payments: PaymentRecord[], contracts: LoanCo
     }).join(','))
   ].join('\n');
 }
+
+/**
+ * Returns structured responsible shares for a contract, falling back gracefully
+ * to parsing the legacy `responsiblePerson` string if structured shares are not yet set.
+ */
+export function getContractResponsibleShares(
+  contract: LoanContract,
+  customTotal?: number
+): { name: string; amount: number }[] {
+  const total = customTotal !== undefined
+    ? customTotal
+    : (contract.monthlyInstallment || 0) + (contract.plannedExtraPayment || 0);
+
+  if (contract.responsibleShares && contract.responsibleShares.length > 0) {
+    return contract.responsibleShares.map(s => ({
+      name: s.name.trim() || 'ผู้รับผิดชอบ',
+      amount: Math.max(0, Number(s.amount) || 0)
+    }));
+  }
+
+  const rawPerson = (contract.responsiblePerson || 'Best & Koy').trim();
+
+  // Pattern: "Best 70% / Koy 30%" or "Best 60% Koy 40%"
+  if (rawPerson.includes('%')) {
+    const match = rawPerson.match(/([A-Za-z0-9ก-๙\s]+)\s*(\d+)\s*%\s*[\/&,]\s*([A-Za-z0-9ก-๙\s]+)\s*(\d+)\s*%/);
+    if (match) {
+      const name1 = match[1].trim();
+      const pct1 = parseInt(match[2], 10);
+      const name2 = match[3].trim();
+      const amt1 = Math.round(total * (pct1 / 100));
+      const amt2 = total - amt1;
+      return [
+        { name: name1, amount: amt1 },
+        { name: name2, amount: amt2 }
+      ];
+    }
+  }
+
+  // Pattern: "Best & Koy" or "Best, Koy" or "Best / Koy"
+  if (rawPerson.includes('&') || rawPerson.includes('/') || rawPerson.includes(',')) {
+    const parts = rawPerson.split(/[&/,]+/).map(p => p.trim()).filter(Boolean);
+    if (parts.length > 0) {
+      const each = Math.round(total / parts.length);
+      return parts.map((name, idx) => ({
+        name,
+        amount: idx === parts.length - 1 ? total - (each * (parts.length - 1)) : each
+      }));
+    }
+  }
+
+  // Single person e.g. "Best" or "Koy"
+  if (rawPerson) {
+    return [{ name: rawPerson, amount: total }];
+  }
+
+  return [{ name: 'Best', amount: total }];
+}
+
+/**
+ * Formats responsible shares into a human-readable summary string
+ */
+export function formatResponsibleSharesSummary(shares: { name: string; amount: number }[]): string {
+  if (!shares || shares.length === 0) return 'ไม่ได้ระบุ';
+  return shares.map(s => `${s.name}: ${formatCurrency(s.amount)} บ.`).join(' / ');
+}
